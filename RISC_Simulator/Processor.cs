@@ -7,23 +7,55 @@ using System.Threading.Tasks;
 
 namespace RISC_Simulator
 {
+    public enum Instruction
+    {
+        MOV = 1,
+        ADD = 2,
+        SUB = 3,
+        JMP = 4,
+        CMP = 5,
+        XOR = 6,
+        JNZ = 7,
+        PSH = 8,
+        POP = 9,
+        INT = 10,
+        END = 255
+
+    }
     public class Processor
     {
-        public RISCMemory Mem;
-        public Processor() { }
+        public bool Verbose = false;
+        private RISCMemory Mem;
+        public Processor(bool verbose = false)
+        {
+            Verbose = verbose;
+        }
 
         public void LoadMemory(RISCMemory memory)
         {
+            if (Verbose)
+            {
+                Console.WriteLine("Initialized memory");
+            }
             Mem = memory;
         }
 
         public void LoadCode(short[] code)
         {
+            if (Verbose)
+            {
+                Console.WriteLine("Code loaded");
+            }
             Mem.Code = code;
         }
 
-        public void Step()
+        public bool Step()
         {
+            if (Mem.Code == null || Mem.Code.Length == 0)
+            {
+                Console.WriteLine("No code loaded in memory, press L to load.");
+                return false;
+            }
             Instruction i = GetNextInstruction();
             switch (i)
             {
@@ -41,15 +73,22 @@ namespace RISC_Simulator
                     break;
                 case Instruction.INT:
                     InstructionInt(Mem.Code[Mem.Ip]);
+                    Mem.Ip++;
                     break;
+                case Instruction.END:
+                    Mem.Ip++;
+                    Console.WriteLine("Program terminated.");
+                    return false;
                 default:
-                    return;
+                    Mem.Ip++;
+                    return true;
             }
+            return true;
         }
 
         private Instruction GetNextInstruction()
         {
-            return (Instruction)Mem.Code[Mem.Ip];
+            return (Instruction)(Mem.Code[Mem.Ip] & 0xFF);
         }
 
         /// <summary>
@@ -61,6 +100,11 @@ namespace RISC_Simulator
         private void InstructionAdd(short instruction)
         {
             byte mode = (byte)(instruction >> 8 & 0xFF);
+            if (Verbose)
+            {
+                Console.WriteLine($"Add(mode:{mode}) ({GetRegister(Mem.Code[Mem.Ip + 1] & 0xFF)}) ({(mode == 1 ? GetRegister(Mem.Code[Mem.Ip + 1] >> 8 & 0xFF) : Mem.Code[Mem.Ip + 2])})");
+                DumpMem();
+            }
             switch(mode)
             {
                 case 1:
@@ -73,6 +117,7 @@ namespace RISC_Simulator
                 case 2:
                     Mem.Ip++;
                     ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
+                    Mem.Ip++;
                     var constant = Mem.Code[Mem.Ip];
                     if (r + constant > short.MaxValue) Mem.Flags |= 1;
                     r = (short)(r + constant);
@@ -90,6 +135,11 @@ namespace RISC_Simulator
         private void InstructionSub(short instruction)
         {
             byte mode = (byte)(instruction >> 8 & 0xFF);
+            if (Verbose)
+            {
+                Console.WriteLine($"Sub(mode:{mode}) ({Mem.Code[Mem.Ip+1] & 0xFF}) ({(mode == 1 ? Mem.Code[Mem.Ip+1] >> 8 & 0xFF : Mem.Code[Mem.Ip+2])})");
+                DumpMem();
+            }
             switch (mode)
             {
                 case 1:
@@ -103,6 +153,7 @@ namespace RISC_Simulator
                 case 2:
                     Mem.Ip++;
                     ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
+                    Mem.Ip++;
                     var constant = Mem.Code[Mem.Ip];
                     if (r - constant > short.MinValue) Mem.Flags |= 1;
                     if (r == constant) Mem.Flags |= 2;
@@ -122,6 +173,11 @@ namespace RISC_Simulator
         private void InstructionMov(short instruction)
         {
             byte mode = (byte)(instruction >> 8 & 0xFF);
+            if (Verbose)
+            {
+                Console.WriteLine($"Mov(mode:{mode}) R({Mem.Code[Mem.Ip] & 0xFF}) R({Mem.Code[Mem.Ip] >> 8 & 0xFF})");
+                DumpMem();
+            }
             switch (mode)
             {
                 case 1:
@@ -143,7 +199,16 @@ namespace RISC_Simulator
         
         private void InstructionInt(short instruction)
         {
-            Console.WriteLine("interrupted");
+            if (Verbose)
+            {
+                Console.WriteLine("Int");
+            }
+            switch (Mem.Code[Mem.Ip] >> 8 & 0xFF)
+            {
+                case 1:
+                    Console.WriteLine($"{Mem.Ax}");
+                    break;
+            }
         }
 
         /// <summary>
@@ -170,6 +235,20 @@ namespace RISC_Simulator
                 default:
                     return ref Mem.NULL;
             }
+        }
+
+        public void DumpMem()
+        {
+            Mem.DumpToConsole();
+        }
+
+        public void LoadRegisters(short ax = 0, short bx = 0, short cx = 0, short dx = 0, byte flags = 0)
+        {
+            Mem.Ax = ax;
+            Mem.Bx = bx;
+            Mem.Cx = cx;
+            Mem.Dx = dx;
+            Mem.Flags = flags;
         }
     }
 }

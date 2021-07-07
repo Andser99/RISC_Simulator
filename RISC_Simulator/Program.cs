@@ -3,37 +3,44 @@ using System;
 
 namespace RISC_Emulator
 {
-    public enum Instruction
-    {
-        MOV = 1,
-        ADD = 2,
-        SUB = 3,
-        JMP = 4,
-        CMP = 5,
-        XOR = 6,
-        JNZ = 7,
-        PSH = 8,
-        POP = 9,
-        INT = 10
-
-    }
     class Program
     {
         static void Main(string[] args)
         {
             RISCMemory memory = new RISCMemory(codeSize: 256, dataSize: 256, stackSize: 256);
-            Processor proc = new Processor();
-            proc.LoadMemory(memory);
+            Processor proc = new Processor(verbose:true);
 
-            var key = Console.ReadKey();
+            proc.LoadMemory(memory);
+            proc.LoadRegisters(bx:156, flags:255);
+
+            var key = Console.ReadKey(true);
             while (key.Key != ConsoleKey.Escape)
             {
-                proc.Step();
-                if (key.Key == ConsoleKey.D)
+                switch (key.Key)
                 {
-                    proc.Mem.DumpToConsole();
+                    case ConsoleKey.R:
+                        while (proc.Step());
+                        break;
+                    case ConsoleKey.S:
+                        proc.Step();
+                        break;
+                    case ConsoleKey.L:
+                        Console.Write("Absolute code path: ");
+                        try
+                        {
+                            proc.LoadCode(CodeReader.ReadToShortArray(Console.ReadLine()));
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"Could not load. Ex.: {e.Message}");
+                        }
+                        break;
+                    case ConsoleKey.D:
+                        proc.DumpMem();
+                        break;
                 }
-                key = Console.ReadKey();
+
+                key = Console.ReadKey(true);
             }
         }
     }

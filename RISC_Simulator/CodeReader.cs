@@ -19,5 +19,18 @@ namespace RISC_Simulator
             }
             return new byte[256];
         }
+        public static short[] ReadToShortArray(string fileName)
+        {
+            short[] shortBuffer = null;
+            byte[] buffer = null;
+            using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+            {
+                shortBuffer = new short[(fs.Length + 1) / 2];
+                buffer = new byte[fs.Length];
+                fs.Read(buffer, 0, (int)fs.Length);
+                Buffer.BlockCopy(buffer, 0, shortBuffer, 0, (int)fs.Length);
+            }
+            return shortBuffer;
+        }
     }
 }

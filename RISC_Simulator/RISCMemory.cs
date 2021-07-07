@@ -69,10 +69,9 @@ namespace RISC_Emulator
 
         public void DumpToConsole()
         {
-            Console.WriteLine($"Ax:{Ax}");
-            Console.WriteLine($"Bx:{Bx}");
-            Console.WriteLine($"Cx:{Cx}");
-            Console.WriteLine($"Dx:{Dx}");
+            Console.WriteLine($"IP:{Ip:00000} Fl:{Convert.ToString(Flags, 2).PadLeft(8, '0')}");
+            Console.WriteLine($"Ax:{Ax:00000} Bx:{Bx:00000}");
+            Console.WriteLine($"Cx:{Cx:00000} Dx:{Dx:00000}");
         }
     }
 }
