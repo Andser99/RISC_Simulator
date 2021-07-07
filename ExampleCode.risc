@@ -1,0 +1,2 @@
+ADD Ax, Bx
+MOV Bx, 5000

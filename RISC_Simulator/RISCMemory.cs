@@ -6,15 +6,17 @@ using System.Threading.Tasks;
 
 namespace RISC_Emulator
 {
-    class Memory
+    public class RISCMemory
     {
-        public byte Ax;
+        public short NULL;
 
-        public byte Bx;
+        public short Ax;
 
-        public byte Cx;
+        public short Bx;
 
-        public byte Dx;
+        public short Cx;
+
+        public short Dx;
 
         /// <summary>
         /// Instruction Pointer, can address up to 2^16 bytes, thus the size of the Code segment is at most 65535 bytes long.
@@ -33,32 +35,32 @@ namespace RISC_Emulator
 
         /// <summary>
         /// Flag Register
-        /// 1 - Overflow
-        /// 2 - Zero
-        /// 4 - Parity, SET even, CLEAR odd
+        /// <br>1 - Overflow</br>
+        /// <br>2 - Zero</br>
+        /// <br>4 - Parity, SET even, CLEAR odd</br>
         /// </summary>
         public byte Flags;
 
         /// <summary>
-        /// Code segment with maximum size is 65536
+        /// Code segment with a maximum addressable size of 65536
         /// </summary>
-        public byte[] Code;
+        public short[] Code;
 
         /// <summary>
-        /// Code segment with maximum size is 65536
+        /// Code segment with a maximum addressable size of 65536
         /// </summary>
-        public byte[] Data;
+        public short[] Data;
 
         /// <summary>
-        /// Code segment with maximum size is 65536
+        /// Code segment with a maximum addressable size of 65536
         /// </summary>
         public byte[] Stack;
-        public Memory(int codeSize = 0, int dataSize = 0, int stackSize = 0)
+        public RISCMemory(int codeSize = 0, int dataSize = 0, int stackSize = 0)
         {
-            Ax = new byte();
-            Bx = new byte();
-            Cx = new byte();
-            Dx = new byte();
+            Ax = new short();
+            Bx = new short();
+            Cx = new short();
+            Dx = new short();
             Ip = 0;
             Dp = 0;
             Sp = 0;
