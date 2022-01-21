@@ -1,17 +1,17 @@
 ﻿using RISC_Simulator;
 using System;
 
-namespace RISC_Emulator
+namespace RISC_Simulator
 {
     class Program
     {
         static void Main(string[] args)
         {
             RISCMemory memory = new RISCMemory(codeSize: 256, dataSize: 256, stackSize: 256);
-            Processor proc = new Processor(verbose:true);
+            Processor proc = new Processor(verbose:false);
 
             proc.LoadMemory(memory);
-            proc.LoadRegisters(bx:156, flags:255);
+            proc.LoadRegisters(flags:255);
 
             var key = Console.ReadKey(true);
             while (key.Key != ConsoleKey.Escape)
@@ -25,7 +25,7 @@ namespace RISC_Emulator
                         proc.Step();
                         break;
                     case ConsoleKey.L:
-                        Console.Write("Absolute code path: ");
+                        Console.Write("Absolute binary code path: ");
                         try
                         {
                             proc.LoadCode(CodeReader.ReadToShortArray(Console.ReadLine()));
@@ -37,6 +37,22 @@ namespace RISC_Emulator
                         break;
                     case ConsoleKey.D:
                         proc.DumpMem();
+                        break;
+                    case ConsoleKey.P:
+                        proc.LoadCode(CodeReader.LastMemBuffer);
+                        Console.WriteLine("Last mem loaded to processor.");
+                        break;
+                    case ConsoleKey.G:
+                        Console.Write("Absolute source code path: ");
+                        try
+                        {
+                            CodeGenerator codeGen = new CodeGenerator();
+                            codeGen.LoadFile(Console.ReadLine());
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"Could not load. Ex.: {e.Message}");
+                        }
                         break;
                 }
 

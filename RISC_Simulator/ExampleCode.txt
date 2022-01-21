@@ -1,0 +1,35 @@
+﻿mov ax bx
+# COMMENT LINE TEST
+# draw pixel format, ax = x, bx = y, cx = color, dx = 1
+# C:\Users\Andrej\source\repos\RISC_Simulator\RISC_Simulator\ExampleCode.txt
+mov ax 1
+mov bx 1
+mov cx 1
+mov dx 1
+int 2
+mov ax 2
+mov bx 1
+mov cx 2
+mov dx 1
+int 2
+mov ax 4
+mov bx 1
+mov cx 4
+mov dx 1
+int 2
+mov ax 5
+mov bx 1
+mov cx 2
+mov dx 1
+int 2
+mov ax 6
+mov bx 1
+mov cx 6
+mov dx 1
+int 2
+mov ax 7
+mov bx 1
+mov cx 5
+mov dx 1
+int 2
+end

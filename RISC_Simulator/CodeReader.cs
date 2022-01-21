@@ -9,6 +9,7 @@ namespace RISC_Simulator
 {
     static class CodeReader
     {
+        public static short[] LastMemBuffer;
         public static byte[] InstructionsFromFile(string path)
         {
             var file = new StreamReader(path);
@@ -30,6 +31,7 @@ namespace RISC_Simulator
                 fs.Read(buffer, 0, (int)fs.Length);
                 Buffer.BlockCopy(buffer, 0, shortBuffer, 0, (int)fs.Length);
             }
+            LastMemBuffer = shortBuffer;
             return shortBuffer;
         }
     }

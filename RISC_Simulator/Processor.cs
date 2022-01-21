@@ -1,5 +1,4 @@
-﻿using RISC_Emulator;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +18,9 @@ namespace RISC_Simulator
         PSH = 8,
         POP = 9,
         INT = 10,
-        END = 255
+        DIV = 11,
+        END = 255,
+        NULL = 256
 
     }
     public class Processor
@@ -79,6 +80,12 @@ namespace RISC_Simulator
                     Mem.Ip++;
                     Console.WriteLine("Program terminated.");
                     return false;
+                case Instruction.DIV:
+                    InstructionDiv(Mem.Code[Mem.Ip]);
+                    Mem.Ip++;
+                    break;
+                case Instruction.NULL:
+                    return false;
                 default:
                     Mem.Ip++;
                     return true;
@@ -88,6 +95,11 @@ namespace RISC_Simulator
 
         private Instruction GetNextInstruction()
         {
+            if (Mem.Ip > Mem.Code.Length) 
+            {
+                Console.WriteLine("Program execution terminated, load again or exit.");
+                return Instruction.NULL;
+            }
             return (Instruction)(Mem.Code[Mem.Ip] & 0xFF);
         }
 
@@ -163,6 +175,45 @@ namespace RISC_Simulator
             }
         }
 
+        /// <summary>
+        /// DIV has multiple operand modes
+        /// 1 - DIV R1, R2      : Divides R1 by R2 and stores it in R1, R1 ref is stored in the lower 8 bits of the next code and R2 in the upper
+        /// 2 - DIV R1, CONST   : Divides the value in R1 with a constant value and stores into R1
+        /// </summary>
+        /// <param name="instruction"> raw byte data of the instruction </param>
+        private void InstructionDiv(short instruction)
+        {
+            byte mode = (byte)(instruction >> 8 & 0xFF);
+            if (Verbose)
+            {
+                Console.WriteLine($"Div(mode:{mode}) ({Mem.Code[Mem.Ip + 1] & 0xFF}) ({(mode == 1 ? Mem.Code[Mem.Ip + 1] >> 8 & 0xFF : Mem.Code[Mem.Ip + 2])})");
+                DumpMem();
+            }
+            switch (mode)
+            {
+                case 1:
+                    Mem.Ip++;
+                    ref var r1 = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r2 = ref GetRegister(Mem.Code[Mem.Ip] >> 8 & 0xFF);
+                    if (r2 == 0) Mem.Flags |= 8;
+                    if (r1 == r2) Mem.Flags |= 2;
+                    r1 = (short)(r1 / r2);
+                    if (r1 % 2 == 0) Mem.Flags |= 4;
+                    else Mem.Flags ^= 4;
+                    break;
+                case 2:
+                    Mem.Ip++;
+                    ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
+                    Mem.Ip++;
+                    var constant = Mem.Code[Mem.Ip];
+                    r = (short)(r / constant);
+                    if (r % 2 == 0) Mem.Flags |= 4;
+                    else Mem.Flags ^= 4;
+                    break;
+
+            }
+        }
+
 
         /// <summary>
         /// Mov has multiple operand modes
@@ -189,14 +240,16 @@ namespace RISC_Simulator
                 case 2:
                     Mem.Ip++;
                     ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
-                    var constant = Mem.Code[Mem.Ip];
-                    if (r - constant > short.MinValue) Mem.Flags |= 1;
-                    r = (short)(r - constant);
+                    var constant = (short)(Mem.Code[Mem.Ip] >> 8);
+                    r = constant;
                     break;
 
             }
         }
-        
+        /// <summary>
+        /// The interrupt type is stored in the upper 8 bits of the instruction
+        /// </summary>
+        /// <param name="instruction"></param>
         private void InstructionInt(short instruction)
         {
             if (Verbose)
@@ -206,7 +259,14 @@ namespace RISC_Simulator
             switch (Mem.Code[Mem.Ip] >> 8 & 0xFF)
             {
                 case 1:
-                    Console.WriteLine($"{Mem.Ax}");
+                    Console.WriteLine($"AX={Mem.Ax}");
+                    break;
+                case 2:
+                    if (Verbose)
+                    {
+                        Console.WriteLine($"Drawing Pixel to Ax, Bx coords - ");
+                    }
+                    Graphics.DrawPixel(Mem.Ax, Mem.Bx, Mem.Cx, Mem.Dx == 1);
                     break;
             }
         }

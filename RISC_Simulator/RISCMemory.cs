@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RISC_Emulator
+namespace RISC_Simulator
 {
     public class RISCMemory
     {
@@ -38,6 +38,7 @@ namespace RISC_Emulator
         /// <br>1 - Overflow</br>
         /// <br>2 - Zero</br>
         /// <br>4 - Parity, SET even, CLEAR odd</br>
+        /// <br>8 - Division by ZERO</br>
         /// </summary>
         public byte Flags;
 
