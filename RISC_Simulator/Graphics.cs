@@ -20,7 +20,7 @@ namespace RISC_Simulator
             (int x, int y) prevPos = (0,0);
             if (color > Enum.GetValues(typeof(ConsoleColor)).Length) throw new ArgumentOutOfRangeException($"Invalid color number {color}");
             if (retainPrevPosition) prevPos = Console.GetCursorPosition();
-            Console.SetCursorPosition(x, y*2);
+            Console.SetCursorPosition(x*2, y);
             ConsoleColor prevColor = Console.ForegroundColor;
             Console.ForegroundColor = (ConsoleColor)color;
             Console.Write("██");

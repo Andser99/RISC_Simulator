@@ -48,6 +48,7 @@ namespace RISC_Simulator
                 Console.WriteLine("Code loaded");
             }
             Mem.Code = code;
+            Mem.Ip = 0;
         }
 
         public bool Step()
@@ -78,7 +79,7 @@ namespace RISC_Simulator
                     break;
                 case Instruction.END:
                     Mem.Ip++;
-                    Console.WriteLine("Program terminated.");
+                    //Console.WriteLine("Program terminated.");
                     return false;
                 case Instruction.DIV:
                     InstructionDiv(Mem.Code[Mem.Ip]);
@@ -266,7 +267,10 @@ namespace RISC_Simulator
                     {
                         Console.WriteLine($"Drawing Pixel to Ax, Bx coords - ");
                     }
-                    Graphics.DrawPixel(Mem.Ax, Mem.Bx, Mem.Cx, Mem.Dx == 1);
+                    //The x coord should be saved to Bx and y to Ax
+                    //Cx has the color code
+                    //Dx set to 1 will restore the cursor to the previous location
+                    Graphics.DrawPixel(Mem.Bx, Mem.Ax, Mem.Cx, Mem.Dx == 1);
                     break;
             }
         }

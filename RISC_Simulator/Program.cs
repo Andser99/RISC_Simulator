@@ -24,6 +24,7 @@ namespace RISC_Simulator
                     case ConsoleKey.S:
                         proc.Step();
                         break;
+                    //Load a compiled binary
                     case ConsoleKey.L:
                         Console.Write("Absolute binary code path: ");
                         try
@@ -42,6 +43,7 @@ namespace RISC_Simulator
                         proc.LoadCode(CodeReader.LastMemBuffer);
                         Console.WriteLine("Last mem loaded to processor.");
                         break;
+                    //Code compiler from textt assembly source
                     case ConsoleKey.G:
                         Console.Write("Absolute source code path: ");
                         try

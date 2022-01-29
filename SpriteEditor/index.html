@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<head>
+    <title> Conway's Game of Life </title>
+    <style type="text/css">
+        html {
+            height: 100%;
+        }
+        body {
+            min-height: 100%;
+            margin: 0px;
+        }
+        .color-btn{
+            position: fixed; 
+            right: 0; 
+            width: 40px; 
+            height: 40px; 
+        }
+    </style>
+    <script>
+
+    function main()
+    {
+    
+        var c = document.getElementById("Game");
+        var ctx = c.getContext("2d");
+        var arr = new Array();
+        var arr2;
+        var animate = true;
+        var btnResize = document.getElementById("button_resize");
+        var btnGenerate = document.getElementById("button_generate");
+        const colors = ["black", "blue", "forestgreen", "cornflowerblue", "red", "purple", "goldenrod", "white", "gray", "royalblue"];
+        var mainDraw;
+        var size = 50;
+        var scaling;
+        var isDragging = false;
+        var currentColor = "blue";
+        const xOffset = 0;
+        const yOffset = 0;
+
+        Init();
+
+        function Init() {
+            resetArray();
+            createColorBtns();
+            document.addEventListener('contextmenu', event => event.preventDefault());
+            console.log(arr);
+            btnResize.addEventListener("click", function(){
+                size = parseInt(document.getElementById("size_field").value);
+                scaling = parseInt(c.height/size);
+                resetArray();
+                clearInterval(mainDraw);
+            });
+            btnGenerate.addEventListener("click", () => {
+                console.log(consoleDrawer());
+            })
+        }
+
+        function resetArray() {
+            ctx.clearRect(0, 0, c.width, c.height);
+            c.height = document.documentElement.clientHeight;
+            c.width = document.documentElement.clientWidth;
+            scaling = parseInt(c.height/size);
+            arr = new Array(size);
+            for (let i = 0; i < size; i++) {
+                arr[i] = new Array(size);
+                for (let j = 0; j < size; j++){
+                    arr[i][j] = 7;
+                }
+            }
+        }
+        
+
+        window.addEventListener('mousedown', logMouseDown);
+        window.addEventListener('mouseup', logMouseUp);
+        window.addEventListener('mousemove', logMouseDrag);
+
+        function colorToInt(colorName) {
+            switch(colorName){
+                case "black": return 0;
+                case "blue": return 1;
+                case "forestgreen": return 2;
+                case "cornflowerblue": return 3;
+                case "red": return 4;
+                case "purple": return 5;
+                case "goldenrod": return 6;
+                case "white": return 7;
+                case "gray": return 8;
+                case "royalblue": return 9;
+            }
+        }
+
+        function consoleDrawer(){
+            var str = "";
+            for (var y = 0; y < arr.length; y++){
+                for (var x = 0; x < arr[y].length; x++){
+                    console.log(arr);
+                    console.log(arr[y]);
+                    console.log(arr[y][x]);
+                    str += `mov ax ${y}\nmov bx ${x}\nmov cx ${arr[x][y]}\nmov dx 1\nint 2\n`;
+                }
+            }
+            return str;
+        }
+
+        function logMouseDrag(event) {
+            if (isDragging) {
+                mouseX = parseInt((event.clientX - xOffset)/scaling);
+                mouseY = parseInt((event.clientY - yOffset)/scaling);
+                if (mouseY < size && mouseX < size && mouseX >= 0 && mouseY >= 0 && !Object.is(-0, mouseX) && !Object.is(-0, mouseY) ) {
+                    if (event.button == 0) {
+                        arr[mouseX][mouseY] = colorToInt(currentColor);
+                        ctx.fillStyle = currentColor;
+                        // console.log(mouseX);
+                        // console.log(mouseY);
+                        ctx.fillRect(mouseX*scaling + xOffset, mouseY*scaling + yOffset, scaling, scaling);
+                    }
+                }
+            }
+        }
+        
+        
+        function logMouseUp(event) {
+            isDragging = event.button == 0 ? false : false;
+        }
+        
+        function logMouseDown(event) {
+            var mouseClick = event.button;
+            isDragging = event.button == 0;
+            mouseX = parseInt((event.clientX - xOffset)/scaling);
+            mouseY = parseInt((event.clientY - yOffset)/scaling);
+            if (mouseY < size && mouseX < size && mouseX >= 0 && mouseY >= 0 && !Object.is(-0, mouseX) && !Object.is(-0, mouseY) ) {
+                if (event.button == 0) {
+                    arr[mouseX][mouseY] = colorToInt(currentColor);
+                    ctx.fillStyle = currentColor;
+                    // console.log(mouseX);
+                    // console.log(mouseY);
+                    ctx.fillRect(mouseX*scaling + xOffset, mouseY*scaling + yOffset, scaling, scaling);
+                }
+                if (event.button == 2) {
+                    arr[mouseX][mouseY] = false;
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(mouseX*scaling + xOffset, mouseY*scaling + yOffset, scaling, scaling);
+                    ctx.fillStyle = "grey";
+                    ctx.fillRect(mouseX*scaling + xOffset + scaling / 5, mouseY*scaling + yOffset + scaling / 5, scaling - scaling / 5, scaling - scaling / 5);
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(mouseX*scaling + xOffset + scaling / 5 * 2, mouseY*scaling + yOffset + scaling / 5 * 2, scaling - scaling / 5 * 2, scaling  - scaling / 5 * 2);
+                    ctx.fillStyle = "grey";
+                    ctx.fillRect(mouseX*scaling + xOffset  + scaling / 5 * 3, mouseY*scaling + yOffset + scaling / 5 * 3, scaling  - scaling / 5 * 3, scaling - scaling / 5 * 3);
+                }
+            }
+        }
+
+        function createColorBtns(){
+            for(let i = 0; i < colors.length; i += 1){
+                var btn = document.createElement("button");
+                btn.style.backgroundColor = colors[i];
+                btn.style.marginTop = `${40*i}px`;
+                btn.id = `button_${colors[i]}`;
+                btn.classList.add("color-btn");
+                btn.addEventListener("click", function(){
+                    currentColor = this.style.backgroundColor;
+                });
+                document.getElementById("buttons").appendChild(btn);
+            }
+        }
+    }
+
+    window.addEventListener("load", main);
+    </script>
+    </head>
+    
+    <body>
+    <canvas id="Game"
+        style="padding: 0px; margin: 0px; border: 0px; background: transparent; position: absolute; left: 0px; touch-action: manipulation">
+    </canvas>
+    <input id="size_field" type="number" style="position: fixed; right: 0; bottom: 40px;">
+    <div id="buttons">
+        <button id="button_resize" style="position: fixed; right: 0; bottom: 40px;">Resize</button>
+        <button id="button_generate" style="position: fixed; right: 0; bottom: 80px;">Generate code</button>
+    </div>
+</body>
