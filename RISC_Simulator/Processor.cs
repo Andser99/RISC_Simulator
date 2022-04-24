@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RISC_Simulator
@@ -51,7 +52,7 @@ namespace RISC_Simulator
             Mem.Ip = 0;
         }
 
-        public bool Step()
+        public async Task<bool> Step()
         {
             if (Mem.Code == null || Mem.Code.Length == 0)
             {
@@ -74,7 +75,7 @@ namespace RISC_Simulator
                     Mem.Ip++;
                     break;
                 case Instruction.INT:
-                    InstructionInt(Mem.Code[Mem.Ip]);
+                    await InstructionInt(Mem.Code[Mem.Ip]);
                     Mem.Ip++;
                     break;
                 case Instruction.END:
@@ -84,6 +85,20 @@ namespace RISC_Simulator
                 case Instruction.DIV:
                     InstructionDiv(Mem.Code[Mem.Ip]);
                     Mem.Ip++;
+                    break;
+                case Instruction.PSH:
+                    InstructionPush(Mem.Code[Mem.Ip]);
+                    Mem.Ip++;
+                    break;
+                case Instruction.POP:
+                    InstructionPop(Mem.Code[Mem.Ip]);
+                    Mem.Ip++;
+                    break;
+                case Instruction.JMP:
+                    InstructionJump(Mem.Code[Mem.Ip]);
+                    break;
+                case Instruction.JNZ:
+                    InstructionJumpNotZero(Mem.Code[Mem.Ip]);
                     break;
                 case Instruction.NULL:
                     return false;
@@ -96,12 +111,41 @@ namespace RISC_Simulator
 
         private Instruction GetNextInstruction()
         {
-            if (Mem.Ip > Mem.Code.Length) 
+            if (Mem.Ip >= Mem.Code.Length) 
             {
                 Console.WriteLine("Program execution terminated, load again or exit.");
                 return Instruction.NULL;
             }
             return (Instruction)(Mem.Code[Mem.Ip] & 0xFF);
+        }
+
+        private void InstructionJump(short instruction)
+        {
+
+            if (Verbose)
+            {
+                Console.WriteLine($"Jmp ({Mem.Code[Mem.Ip + 1]})");
+                DumpMem();
+            }
+            Mem.Ip = Mem.Code[Mem.Ip + 1];
+        }
+
+        private void InstructionJumpNotZero(short instruction)
+        {
+
+            if (Verbose)
+            {
+                Console.WriteLine($"Jnz ({Mem.Code[Mem.Ip + 1]}) {(Mem.Ax != 0 ? "will jump" : "won't jump")}");
+                DumpMem();
+            }
+            if ((Mem.Flags & 2) == 0)
+            {
+                Mem.Ip = Mem.Code[Mem.Ip + 1];
+            }
+            else
+            {
+                Mem.Ip++;
+            }
         }
 
         /// <summary>
@@ -126,6 +170,7 @@ namespace RISC_Simulator
                     ref var r2 = ref GetRegister(Mem.Code[Mem.Ip] >> 8 & 0xFF);
                     if (r1 + r2 > short.MaxValue) Mem.Flags |= 1;
                     r1 = (short)(r1 + r2);
+                    if (r1 == 0) Mem.Flags |= 2;
                     break;
                 case 2:
                     Mem.Ip++;
@@ -134,6 +179,7 @@ namespace RISC_Simulator
                     var constant = Mem.Code[Mem.Ip];
                     if (r + constant > short.MaxValue) Mem.Flags |= 1;
                     r = (short)(r + constant);
+                    if (r == 0) Mem.Flags |= 2;
                     break;
 
             }
@@ -168,7 +214,7 @@ namespace RISC_Simulator
                     ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
                     Mem.Ip++;
                     var constant = Mem.Code[Mem.Ip];
-                    if (r - constant > short.MinValue) Mem.Flags |= 1;
+                    if (r - constant > r) Mem.Flags |= 1;
                     if (r == constant) Mem.Flags |= 2;
                     r = (short)(r - constant);
                     break;
@@ -197,7 +243,7 @@ namespace RISC_Simulator
                     ref var r1 = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
                     ref var r2 = ref GetRegister(Mem.Code[Mem.Ip] >> 8 & 0xFF);
                     if (r2 == 0) Mem.Flags |= 8;
-                    if (r1 == r2) Mem.Flags |= 2;
+                    if (r1 < r2) Mem.Flags |= 2;
                     r1 = (short)(r1 / r2);
                     if (r1 % 2 == 0) Mem.Flags |= 4;
                     else Mem.Flags ^= 4;
@@ -210,6 +256,7 @@ namespace RISC_Simulator
                     r = (short)(r / constant);
                     if (r % 2 == 0) Mem.Flags |= 4;
                     else Mem.Flags ^= 4;
+                    if (constant > r) Mem.Flags |= 2;
                     break;
 
             }
@@ -219,7 +266,7 @@ namespace RISC_Simulator
         /// <summary>
         /// Mov has multiple operand modes
         /// 1 - MOV R1, R2      : Sets the value of R2 to the value of R1, R1 ref is stored in the lower 8 bits of the next code and R2 in the upper
-        /// 2 - MOV R1, CONST   : Sets R1 to the value of CONST
+        /// 2 - MOV R1, CONST   : Sets R1 to the value of CONST, limited to 8 bytes of memory (to be updated)
         /// </summary>
         /// <param name="instruction"> raw byte data of the instruction </param>
         private void InstructionMov(short instruction)
@@ -227,7 +274,14 @@ namespace RISC_Simulator
             byte mode = (byte)(instruction >> 8 & 0xFF);
             if (Verbose)
             {
-                Console.WriteLine($"Mov(mode:{mode}) R({Mem.Code[Mem.Ip] & 0xFF}) R({Mem.Code[Mem.Ip] >> 8 & 0xFF})");
+                if (mode == 1)
+                {
+                    Console.WriteLine($"Mov (mode:{mode} reg-reg) R({Mem.Code[Mem.Ip + 1] & 0xFF}) <- R({Mem.Code[Mem.Ip + 1] >> 8 & 0xFF})");
+                }
+                else
+                {
+                    Console.WriteLine($"Mov (mode:{mode} reg-const) R({Mem.Code[Mem.Ip + 1] & 0xFF}) <- Val({Mem.Code[Mem.Ip + 1] >> 8 & 0xFF})");
+                }
                 DumpMem();
             }
             switch (mode)
@@ -247,11 +301,30 @@ namespace RISC_Simulator
 
             }
         }
+        private void InstructionPush(short instruction)
+        {
+            if (Mem.Sp >= Mem.Stack.Length) throw new StackOverflowException();
+            ref var registerToPush = ref GetRegister((byte)(instruction >> 8 & 0xFF));
+            Mem.Stack[Mem.Sp] = registerToPush;
+            Mem.Sp++;
+        }
+        private void InstructionPop(short instruction)
+        {
+            if (Mem.Sp == 0) throw new ArgumentOutOfRangeException("Nothing to pop from stack.");
+            ref var registerToPop = ref GetRegister((byte)(instruction >> 8 & 0xFF));
+            Mem.Sp--;
+            registerToPop = Mem.Stack[Mem.Sp];
+        }
+
         /// <summary>
         /// The interrupt type is stored in the upper 8 bits of the instruction
+        /// 1 - Prints the content of Ax
+        /// 2 - Draws a pixel at (x, y) Bx, Ax with color stored in Cx, Dx is a flag to define
+        /// whether the cursor should be restored to the previous location
+        /// 3 - Delays the program for Ax milliseconds
         /// </summary>
         /// <param name="instruction"></param>
-        private void InstructionInt(short instruction)
+        private async Task<bool> InstructionInt(short instruction)
         {
             if (Verbose)
             {
@@ -272,7 +345,11 @@ namespace RISC_Simulator
                     //Dx set to 1 will restore the cursor to the previous location
                     Graphics.DrawPixel(Mem.Bx, Mem.Ax, Mem.Cx, Mem.Dx == 1);
                     break;
+                case 3:
+                    await Task.Delay(Mem.Ax);
+                    break;
             }
+            return true;
         }
 
         /// <summary>

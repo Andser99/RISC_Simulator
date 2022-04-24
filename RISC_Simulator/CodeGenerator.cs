@@ -57,6 +57,94 @@ namespace RISC_Simulator
                     _memory.Code[_memory.Ip] = (short)(10 + (interruptID << 8));
                     _memory.Ip++;
                     break;
+                case "push":
+                    _memory.Code[_memory.Ip] = (short)(8 + (RegisterToId(tokens[1]) << 8));
+                    _memory.Ip++;
+                    break;
+                case "pop":
+                    _memory.Code[_memory.Ip] = (short)(9 + (RegisterToId(tokens[1]) << 8));
+                    _memory.Ip++;
+                    break;
+                case "add":
+                    if (tokens[2].ToLower().Contains('x'))
+                    {
+                        //Higher 8 bits are set to mode 1
+                        _memory.Code[_memory.Ip] = 258;
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = (short)((RegisterToId(tokens[2]) << 8) + RegisterToId(tokens[1]));
+                        _memory.Ip++;
+                    }
+                    else
+                    {
+                        //Higher 8 bits are set to mode 2
+                        _memory.Code[_memory.Ip] = 514;
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = RegisterToId(tokens[1]);
+                        short.TryParse(tokens[2], out short constant);
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = constant;
+                        _memory.Ip++;
+
+                    }
+                    break;
+                case "sub":
+                    if (tokens[2].ToLower().Contains('x'))
+                    {
+                        //Higher 8 bits are set to mode 1
+                        _memory.Code[_memory.Ip] = 259;
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = (short)((RegisterToId(tokens[2]) << 8) + RegisterToId(tokens[1]));
+                        _memory.Ip++;
+                    }
+                    else
+                    {
+                        //Higher 8 bits are set to mode 2
+                        _memory.Code[_memory.Ip] = 515;
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = RegisterToId(tokens[1]);
+                        short.TryParse(tokens[2], out short constant);
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = constant;
+                        _memory.Ip++;
+
+                    }
+                    break;
+                case "div":
+                    if (tokens[2].ToLower().Contains('x'))
+                    {
+                        //Higher 8 bits are set to mode 1
+                        _memory.Code[_memory.Ip] = 267;
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = (short)((RegisterToId(tokens[2]) << 8) + RegisterToId(tokens[1]));
+                        _memory.Ip++;
+                    }
+                    else
+                    {
+                        //Higher 8 bits are set to mode 2
+                        _memory.Code[_memory.Ip] = 523;
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = RegisterToId(tokens[1]);
+                        short.TryParse(tokens[2], out short constant);
+                        _memory.Ip++;
+                        _memory.Code[_memory.Ip] = constant;
+                        _memory.Ip++;
+
+                    }
+                    break;
+                case "jmp":
+                    short.TryParse(tokens[1], out short codePoint);
+                    _memory.Code[_memory.Ip] = 4;
+                    _memory.Ip++;
+                    _memory.Code[_memory.Ip] = codePoint;
+                    _memory.Ip++;
+                    break;
+                case "jnz":
+                    short.TryParse(tokens[1], out short codePointNZ);
+                    _memory.Code[_memory.Ip] = 7;
+                    _memory.Ip++;
+                    _memory.Code[_memory.Ip] = codePointNZ;
+                    _memory.Ip++;
+                    break;
                 case "end":
                     _memory.Code[_memory.Ip] = 255;
                     GenerateCode();

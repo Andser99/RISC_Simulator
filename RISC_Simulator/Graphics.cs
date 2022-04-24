@@ -17,7 +17,9 @@ namespace RISC_Simulator
         /// <param name="color">Color list based on ConsoleColor order</param>
         public static void DrawPixel(short x, short y, short color, bool retainPrevPosition = false)
         {
+            Console.CursorVisible = false;
             (int x, int y) prevPos = (0,0);
+            if (color == 16) return;
             if (color > Enum.GetValues(typeof(ConsoleColor)).Length) throw new ArgumentOutOfRangeException($"Invalid color number {color}");
             if (retainPrevPosition) prevPos = Console.GetCursorPosition();
             Console.SetCursorPosition(x*2, y);
@@ -26,6 +28,7 @@ namespace RISC_Simulator
             Console.Write("██");
             Console.ForegroundColor = prevColor;
             if (retainPrevPosition) Console.SetCursorPosition(prevPos.x, prevPos.y);
+            Console.CursorVisible = true;
         }
     }
 }

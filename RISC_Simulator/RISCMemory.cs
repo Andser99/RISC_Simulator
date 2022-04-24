@@ -55,7 +55,7 @@ namespace RISC_Simulator
         /// <summary>
         /// Code segment with a maximum addressable size of 65536
         /// </summary>
-        public byte[] Stack;
+        public short[] Stack;
         public RISCMemory(int codeSize = 0, int dataSize = 0, int stackSize = 0)
         {
             Ax = new short();
@@ -66,6 +66,15 @@ namespace RISC_Simulator
             Dp = 0;
             Sp = 0;
 
+            if (dataSize > 0)
+            {
+                Data = new short[dataSize];
+            }
+            if (stackSize > 0)
+            {
+                Stack = new short[stackSize];
+            }
+
         }
 
         public void DumpToConsole()
@@ -73,6 +82,7 @@ namespace RISC_Simulator
             Console.WriteLine($"IP:{Ip:00000} Fl:{Convert.ToString(Flags, 2).PadLeft(8, '0')}");
             Console.WriteLine($"Ax:{Ax:00000} Bx:{Bx:00000}");
             Console.WriteLine($"Cx:{Cx:00000} Dx:{Dx:00000}");
+            Console.WriteLine($"Sp:{Sp:00000} Dp:{Dp:00000}");
         }
     }
 }

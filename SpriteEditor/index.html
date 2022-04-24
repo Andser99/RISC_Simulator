@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <head>
-    <title> Conway's Game of Life </title>
+    <title> Sprite Editor yeet </title>
     <style type="text/css">
         html {
             height: 100%;
@@ -97,7 +97,7 @@
                     console.log(arr);
                     console.log(arr[y]);
                     console.log(arr[y][x]);
-                    str += `mov ax ${y}\nmov bx ${x}\nmov cx ${arr[x][y]}\nmov dx 1\nint 2\n`;
+                    str += `mov ax ${y}\nmov bx ${x}\nmov cx ${arr[x][y] === false ? 16 : arr[x][y]}\nmov dx 1\nint 2\n`;
                 }
             }
             return str;

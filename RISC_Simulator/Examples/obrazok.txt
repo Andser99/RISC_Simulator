@@ -1,4 +1,4 @@
-﻿# C:\Users\Andrej\source\repos\RISC_Simulator\RISC_Simulator\obrazok.txt
+﻿# S:\src\RISC_Simulator\RISC_Simulator\Examples\obrazok.txt
 mov ax 0
 mov bx 0
 mov cx 0
