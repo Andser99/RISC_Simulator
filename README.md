@@ -33,7 +33,7 @@ ADD Bx 255 = 02 02 02 00 FF (02 means constant to registry, 02 ADD opcode, 02 is
 00 FF - 255, signals END of program, repeated multiple times
 ```
 
-More examples can be found in the RISC_Simulator/Examples folder
+More examples can be found in the ../RISC_Simulator/Examples folder
 
 # Application
 The console application uses a key based interaction, the following commands are implemented

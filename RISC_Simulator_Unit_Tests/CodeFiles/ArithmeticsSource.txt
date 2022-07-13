@@ -1,0 +1,33 @@
+﻿# draw pixel format, ax = y, bx = x, cx = color, dx = 1
+# S:\src\RISC_Simulator\RISC_Simulator\Examples\ExampleCode.txt
+
+# 01 02 01 0A
+# mov 0x01, mode 2 0x02, to Ax 0x01, value 10 0x0A
+mov ax 20
+
+# 01 02 02 05
+mov bx 5
+
+# 03 02 01 00 05 00
+sub ax 5
+int 1
+
+# 03 01 01 02
+sub ax bx
+int 1
+
+# 0b 01 01 02
+div ax bx
+int 1
+
+# 02 02 01 00 0A 00
+# add 0x02, mode 2 0x02, to reg Ax 0x01 0x00, value10 0x0A 0x00 - little endian
+add ax 10
+
+# add 0x02, mode 1 0x01, to reg Ax 0x01, reg Bx 0x02
+add ax bx
+
+# int 0x0A print Ax 0x01
+int 1
+# FF 00
+end
