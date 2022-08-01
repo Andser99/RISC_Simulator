@@ -11,6 +11,8 @@ namespace RISC_Simulator.Compiler
     {
         private RISCMemory _memory;
         string _path;
+        private Dictionary<string, short> _labelDictionary = new();
+        private Dictionary<short , string> _goToDictionary = new();
         public CodeGenerator()
         {
             _memory = new RISCMemory();
@@ -20,11 +22,21 @@ namespace RISC_Simulator.Compiler
         public void LoadFile(string path)
         {
             _path = path;
-            foreach (var line in File.ReadLines(path))
+            var fileLines = File.ReadLines(path);
+            foreach (var line in fileLines)
             {
                 AddInstruction(line);
             }
         }
+
+        private void PostProcessGoTos()
+        {
+            foreach (var goToEntry in _goToDictionary)
+            {
+                _memory.Code[goToEntry.Key] = _labelDictionary[goToEntry.Value];
+            }
+        }
+
         public void AddInstruction(string instruction)
         {
             string[] tokens = instruction.Split(' ');
@@ -145,6 +157,12 @@ namespace RISC_Simulator.Compiler
                     _memory.Code[_memory.Ip] = codePointNZ;
                     _memory.Ip++;
                     break;
+                case "label":
+                    AddLabel(tokens);
+                    break;
+                case "goto":
+                    AddJumpToLabel(tokens);
+                    break;
                 case "end":
                     _memory.Code[_memory.Ip] = 255;
                     GenerateCode();
@@ -152,8 +170,45 @@ namespace RISC_Simulator.Compiler
             }
         }
 
+        
+        private void AddJumpToLabel(string[] tokens)
+        {
+            //throw new NotImplementedException();
+            // NYI
+            // Second pass through jump labels to point them at found labels
+            var hasLabelArgument = tokens.Length > 1 && tokens[1].Length > 0;
+            if (hasLabelArgument)
+            {
+                _memory.Code[_memory.Ip] = 4;
+                _memory.Ip++;
+                _memory.Code[_memory.Ip] = -1;
+                _goToDictionary.Add(_memory.Ip, tokens[1]);
+                _memory.Ip++;
+            }
+            else
+            {
+                throw new ArgumentNullException(nameof(tokens));
+            }
+        }
+
+        private void AddLabel(string[] tokens)
+        {
+            var hasLabelName = tokens.Length > 1 && tokens[1].Length > 0;
+            if (hasLabelName)
+            {
+                _labelDictionary.Add(tokens[1], _memory.Ip);
+            }
+            else
+            {
+                throw new ArgumentException("Invalid label statement argument.");
+            }
+
+        }
+
         private void GenerateCode()
         {
+            PostProcessGoTos();
+
             string newPath = Path.ChangeExtension(_path, "risc");
             using (FileStream fs = new FileStream(newPath, FileMode.OpenOrCreate, FileAccess.Write))
             {

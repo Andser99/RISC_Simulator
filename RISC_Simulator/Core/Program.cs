@@ -19,6 +19,10 @@ namespace RISC_Simulator
             {
                 switch (key.Key)
                 {
+                    case ConsoleKey.V:
+                        proc.Verbose = !proc.Verbose;
+                        Console.WriteLine($"Verbosity changed to: {proc.Verbose}");
+                        break;
                     case ConsoleKey.R:
                         while (proc.Step().GetAwaiter().GetResult());
                         break;

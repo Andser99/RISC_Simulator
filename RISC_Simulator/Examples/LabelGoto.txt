@@ -1,0 +1,15 @@
+﻿#Example for how labels work, ax should 4 after execution
+
+mov ax 0
+
+goto ADD_ENTRY_POINT
+
+add ax 10
+
+label ADD_ENTRY_POINT
+
+add ax 4
+
+int 1
+
+end

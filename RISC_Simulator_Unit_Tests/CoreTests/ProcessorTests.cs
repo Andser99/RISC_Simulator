@@ -24,7 +24,6 @@ namespace RISC_Simulator_Unit_Tests
         /// Files must have "Copy To Output Directory" set to "Copy if newer" or "Copy Always" in properties,
         /// otherwise a FileNotFound Exception is thrown
         /// </summary>
-        /// <param name="exampleFileName"></param>
         public void LoadCodeExample(string exampleFileName)
         {
             string soureFile = Path.Combine(TestContext.CurrentContext.TestDirectory, _codeFolder, exampleFileName);
@@ -64,6 +63,14 @@ namespace RISC_Simulator_Unit_Tests
             LoadCodeExample("AddBx10.txt");
             proc.ExecuteWholeProgram();
             Assert.AreEqual(proc.Mem.Bx, 10);
+        }
+
+        [Test]
+        public void ExecuteCode_GotoLabelSkipsAddition_AxIs4()
+        {
+            LoadCodeExample("LabelGoto.txt");
+            proc.ExecuteWholeProgram();
+            Assert.AreEqual(4, proc.Mem.Ax);
         }
 
         [Test]
