@@ -1,0 +1,7 @@
+﻿.data
+allocate 2
+word 11
+word 22
+.code
+load ax 1
+end

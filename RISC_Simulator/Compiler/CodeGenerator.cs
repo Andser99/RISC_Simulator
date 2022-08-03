@@ -13,6 +13,7 @@ namespace RISC_Simulator.Compiler
         string _path;
         private Dictionary<string, short> _labelDictionary = new();
         private Dictionary<short , string> _goToDictionary = new();
+        private short _dataPointer = 0;
         public CodeGenerator()
         {
             _memory = new RISCMemory();
@@ -22,8 +23,36 @@ namespace RISC_Simulator.Compiler
         public void LoadFile(string path)
         {
             _path = path;
-            var fileLines = File.ReadLines(path);
-            foreach (var line in fileLines)
+            var fileLines = File.ReadLines(path).Select(_ => _.ToLower()).ToList();
+
+            var indexOfDataPart = fileLines.IndexOf(".data") + 1;
+            var indexOfCodePart = fileLines.IndexOf(".code") + 1;
+            List<string> dataPart = null; 
+
+            if (indexOfDataPart > 0)
+            {
+                dataPart = fileLines.GetRange(indexOfDataPart, indexOfCodePart - 2);
+            }
+
+            List<string> codePart = null;
+            if (indexOfCodePart > 0)
+            {
+                var remainingRangeLength = fileLines.Count - indexOfCodePart;
+                codePart = fileLines.GetRange(indexOfCodePart , remainingRangeLength);
+            }
+            else
+            {
+                codePart = fileLines;
+            }
+
+            if (dataPart != null)
+            {
+                foreach (var line in dataPart)
+                {
+                    AddData(line) ;
+                }
+            }
+            foreach (var line in codePart)
             {
                 AddInstruction(line);
             }
@@ -37,15 +66,50 @@ namespace RISC_Simulator.Compiler
             }
         }
 
+        public void AddData(string dataLine)
+        {
+            string[] tokens = dataLine.Split(' ');
+            switch (tokens[0])
+            {
+                case "allocate":
+                    short.TryParse(tokens[1], out short allocatedSize);
+                    _memory.Data = new short[allocatedSize];
+                    break;
+                case "word":
+                    AllocateWord(tokens);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public void AllocateWord(string[] tokens)
+        {
+            var parseResult = short.TryParse(tokens[1], out short wordValue);
+            short length = 1;
+            if (tokens.Length > 2)
+            {
+                short.TryParse(tokens[2], out length);
+            }
+            if (parseResult)
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    _memory.Data[_dataPointer] = wordValue;
+                    _dataPointer++;
+                }
+            }
+        }
+
         public void AddInstruction(string instruction)
         {
             string[] tokens = instruction.Split(' ');
-            switch (tokens[0].ToLower())
+            switch (tokens[0])
             {
                 case "#":
                     break;
                 case "mov":
-                    if (tokens[2].ToLower().Contains('x'))
+                    if (tokens[2].Contains('x'))
                     {
                         //Higher 8 bits are set to mode 1
                         _memory.Code[_memory.Ip] = 257;
@@ -64,6 +128,22 @@ namespace RISC_Simulator.Compiler
 
                     }
                     break;
+                case "load":
+                    _memory.Code[_memory.Ip] = 12;
+                    _memory.Code[_memory.Ip] += (short)(RegisterToId(tokens[1]) << 8);
+                    _memory.Ip++;
+                    short.TryParse(tokens[2], out short loadDataPoint);
+                    _memory.Code[_memory.Ip] = loadDataPoint;
+                    _memory.Ip++;
+                    break;
+                case "store":
+                    _memory.Code[_memory.Ip] = 13;
+                    _memory.Code[_memory.Ip] += (short)(RegisterToId(tokens[2]) << 8);
+                    _memory.Ip++;
+                    short.TryParse(tokens[1], out short storeDataPoint);
+                    _memory.Code[_memory.Ip] = storeDataPoint;
+                    _memory.Ip++;
+                    break;
                 case "int":
                     short.TryParse(tokens[1], out short interruptID);
                     _memory.Code[_memory.Ip] = (short)(10 + (interruptID << 8));
@@ -78,7 +158,7 @@ namespace RISC_Simulator.Compiler
                     _memory.Ip++;
                     break;
                 case "add":
-                    if (tokens[2].ToLower().Contains('x'))
+                    if (tokens[2].Contains('x'))
                     {
                         //Higher 8 bits are set to mode 1
                         _memory.Code[_memory.Ip] = 258;
@@ -100,7 +180,7 @@ namespace RISC_Simulator.Compiler
                     }
                     break;
                 case "sub":
-                    if (tokens[2].ToLower().Contains('x'))
+                    if (tokens[2].Contains('x'))
                     {
                         //Higher 8 bits are set to mode 1
                         _memory.Code[_memory.Ip] = 259;
@@ -122,7 +202,7 @@ namespace RISC_Simulator.Compiler
                     }
                     break;
                 case "div":
-                    if (tokens[2].ToLower().Contains('x'))
+                    if (tokens[2].Contains('x'))
                     {
                         //Higher 8 bits are set to mode 1
                         _memory.Code[_memory.Ip] = 267;
@@ -157,6 +237,8 @@ namespace RISC_Simulator.Compiler
                     _memory.Code[_memory.Ip] = codePointNZ;
                     _memory.Ip++;
                     break;
+                case "cmp":
+                    throw new NotImplementedException("Compare instruction not yet implemented.");
                 case "label":
                     AddLabel(tokens);
                     break;
@@ -166,6 +248,7 @@ namespace RISC_Simulator.Compiler
                 case "end":
                     _memory.Code[_memory.Ip] = 255;
                     GenerateCode();
+                    GenerateData();
                     break;
             }
         }
@@ -203,6 +286,19 @@ namespace RISC_Simulator.Compiler
                 throw new ArgumentException("Invalid label statement argument.");
             }
 
+        }
+        private void GenerateData()
+        {
+            if (_dataPointer == 0) return;
+
+            string newPath = Path.ChangeExtension(_path, "riscd");
+            using (FileStream fs = new FileStream(newPath, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                byte[] buffer = new byte[(_dataPointer) * 2];
+                Buffer.BlockCopy(_memory.Data, 0, buffer, 0, (_dataPointer) * 2);
+                fs.Write(buffer, 0, (int)((_dataPointer) * 2));
+            }
+            Console.WriteLine($"Code successfully generated and saved to {newPath}");
         }
 
         private void GenerateCode()

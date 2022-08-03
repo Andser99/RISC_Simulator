@@ -1,0 +1,9 @@
+﻿.data
+allocate 2
+word 0
+word 0
+.code
+mov ax 123
+store 1 ax
+load bx 1
+end

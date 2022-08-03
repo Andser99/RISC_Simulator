@@ -1,6 +1,7 @@
 ﻿using System;
 using RISC_Simulator.Utils;
 using RISC_Simulator.Compiler;
+using System.IO;
 
 namespace RISC_Simulator
 {
@@ -45,7 +46,10 @@ namespace RISC_Simulator
                         Console.Write("Absolute binary code path: ");
                         try
                         {
-                            proc.LoadCode(CodeReader.ReadToShortArray(Console.ReadLine()));
+                            var path = Console.ReadLine();
+                            var codeRead = CodeReader.ReadToShortArray(path);
+                            var dataRead = CodeReader.ReadToShortArray(Path.ChangeExtension(path, "riscd"));
+                            proc.LoadProgram(codeRead, dataRead);
                         }
                         catch (Exception e)
                         {
@@ -56,7 +60,7 @@ namespace RISC_Simulator
                         proc.DumpMem();
                         break;
                     case ConsoleKey.P:
-                        proc.LoadCode(CodeReader.LastMemBuffer);
+                        proc.LoadProgram(CodeReader.LastMemBuffer);
                         Console.WriteLine("Last mem loaded to processor.");
                         break;
                     //Code compiler from textt assembly source

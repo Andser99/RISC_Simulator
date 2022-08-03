@@ -22,6 +22,7 @@ namespace RISC_Simulator.Utils
         }
         public static short[] ReadToShortArray(string fileName)
         {
+            if (!File.Exists(fileName)) return null;
             short[] shortBuffer = null;
             byte[] buffer = null;
             using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))

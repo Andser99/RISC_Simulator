@@ -21,6 +21,8 @@ namespace RISC_Simulator
         POP = 9,
         INT = 10,
         DIV = 11,
+        LOAD = 12,
+        STORE = 13,
         END = 255,
         NULL = 256
 
@@ -49,7 +51,7 @@ namespace RISC_Simulator
             Mem = memory;
         }
 
-        public void LoadCode(short[] code)
+        public void LoadProgram(short[] code, short[] data = null)
         {
             if (Verbose)
             {
@@ -57,6 +59,13 @@ namespace RISC_Simulator
             }
             Mem.Code = code;
             Mem.Ip = 0;
+
+            if (Verbose && data != null)
+            {
+                Console.WriteLine("Data loaded");
+            }
+            Mem.Data = data;
+            Mem.Dp = 0;
         }
 
         public async Task<bool> Step()
@@ -73,6 +82,14 @@ namespace RISC_Simulator
                     InstructionMov(Mem.Code[Mem.Ip]);
                     Mem.Ip++;
                     break;
+                case Instruction.LOAD:
+                    InstructionLoad(Mem.Code[Mem.Ip]);
+                    Mem.Ip++;
+                    break;
+                case Instruction.STORE:
+                    InstructionStore(Mem.Code[Mem.Ip]);
+                    Mem.Ip++;
+                    break;
                 case Instruction.ADD:
                     InstructionAdd(Mem.Code[Mem.Ip]);
                     Mem.Ip++;
@@ -87,7 +104,10 @@ namespace RISC_Simulator
                     break;
                 case Instruction.END:
                     Mem.Ip++;
-                    //Console.WriteLine("Program terminated.");
+                    if (Verbose)
+                    {
+                        Console.WriteLine("Program terminated.");
+                    }
                     return false;
                 case Instruction.DIV:
                     InstructionDiv(Mem.Code[Mem.Ip]);
@@ -155,6 +175,11 @@ namespace RISC_Simulator
             }
         }
 
+        private void InstructionCmp(short instruction)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Add has multiple operand modes
         /// 1 - ADD R1, R2      : Adds R2 to R1 and writes it to R1, R1 ref is stored in the lower 8 bits of the next code and R2 in the upper
@@ -166,22 +191,22 @@ namespace RISC_Simulator
             byte mode = (byte)(instruction >> 8 & 0xFF);
             if (Verbose)
             {
-                Console.WriteLine($"Add(mode:{mode}) ({GetRegister(Mem.Code[Mem.Ip + 1] & 0xFF)}) ({(mode == 1 ? GetRegister(Mem.Code[Mem.Ip + 1] >> 8 & 0xFF) : Mem.Code[Mem.Ip + 2])})");
+                Console.WriteLine($"Add(mode:{mode}) ({GetRegisterRef(Mem.Code[Mem.Ip + 1] & 0xFF)}) ({(mode == 1 ? GetRegisterRef(Mem.Code[Mem.Ip + 1] >> 8 & 0xFF) : Mem.Code[Mem.Ip + 2])})");
                 DumpMem();
             }
             switch(mode)
             {
                 case 1:
                     Mem.Ip++;
-                    ref var r1 = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
-                    ref var r2 = ref GetRegister(Mem.Code[Mem.Ip] >> 8 & 0xFF);
+                    ref var r1 = ref GetRegisterRef(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r2 = ref GetRegisterRef(Mem.Code[Mem.Ip] >> 8 & 0xFF);
                     if (r1 + r2 > short.MaxValue) Mem.Flags |= 1;
                     r1 = (short)(r1 + r2);
                     if (r1 == 0) Mem.Flags |= 2;
                     break;
                 case 2:
                     Mem.Ip++;
-                    ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r = ref GetRegisterRef(Mem.Code[Mem.Ip] & 0xFF);
                     Mem.Ip++;
                     var constant = Mem.Code[Mem.Ip];
                     if (r + constant > short.MaxValue) Mem.Flags |= 1;
@@ -210,15 +235,17 @@ namespace RISC_Simulator
             {
                 case 1:
                     Mem.Ip++;
-                    ref var r1 = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
-                    ref var r2 = ref GetRegister(Mem.Code[Mem.Ip] >> 8 & 0xFF);
+                    ref var r1 = ref GetRegisterRef(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r2 = ref GetRegisterRef(Mem.Code[Mem.Ip] >> 8 & 0xFF);
                     if (r1 - r2 < short.MinValue) Mem.Flags |= 1;
                     if (r1 == r2) Mem.Flags |= 2;
+                    if (r1 > r2) Mem.Flags |= 16;
+                    else Mem.Flags ^= 16;
                     r1 = (short)(r1 - r2);
                     break;
                 case 2:
                     Mem.Ip++;
-                    ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r = ref GetRegisterRef(Mem.Code[Mem.Ip] & 0xFF);
                     Mem.Ip++;
                     var constant = Mem.Code[Mem.Ip];
                     if (r - constant > r) Mem.Flags |= 1;
@@ -247,8 +274,8 @@ namespace RISC_Simulator
             {
                 case 1:
                     Mem.Ip++;
-                    ref var r1 = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
-                    ref var r2 = ref GetRegister(Mem.Code[Mem.Ip] >> 8 & 0xFF);
+                    ref var r1 = ref GetRegisterRef(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r2 = ref GetRegisterRef(Mem.Code[Mem.Ip] >> 8 & 0xFF);
                     if (r2 == 0) Mem.Flags |= 8;
                     if (r1 < r2) Mem.Flags |= 2;
                     r1 = (short)(r1 / r2);
@@ -257,7 +284,7 @@ namespace RISC_Simulator
                     break;
                 case 2:
                     Mem.Ip++;
-                    ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r = ref GetRegisterRef(Mem.Code[Mem.Ip] & 0xFF);
                     Mem.Ip++;
                     var constant = Mem.Code[Mem.Ip];
                     r = (short)(r / constant);
@@ -295,30 +322,45 @@ namespace RISC_Simulator
             {
                 case 1:
                     Mem.Ip++;
-                    ref var r1 = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
-                    ref var r2 = ref GetRegister(Mem.Code[Mem.Ip] >> 8 & 0xFF);
+                    ref var r1 = ref GetRegisterRef(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r2 = ref GetRegisterRef(Mem.Code[Mem.Ip] >> 8 & 0xFF);
                     r1 = r2;
                     break;
                 case 2:
                     Mem.Ip++;
-                    ref var r = ref GetRegister(Mem.Code[Mem.Ip] & 0xFF);
+                    ref var r = ref GetRegisterRef(Mem.Code[Mem.Ip] & 0xFF);
                     var constant = (short)(Mem.Code[Mem.Ip] >> 8);
                     r = constant;
                     break;
 
             }
         }
+
+        private void InstructionLoad(short instruction)
+        {
+            ref var registerTarget = ref GetRegisterRef((byte)(instruction >> 8 & 0xFF));
+            Mem.Ip++;
+            registerTarget = Mem.Data[Mem.Code[Mem.Ip]];
+        }
+
+        private void InstructionStore(short instruction)
+        {
+            var registerValue = GetRegisterValue((byte)(instruction >> 8 & 0xFF));
+            Mem.Ip++;
+            Mem.Data[Mem.Code[Mem.Ip]] = registerValue;
+        }
+
         private void InstructionPush(short instruction)
         {
             if (Mem.Sp >= Mem.Stack.Length) throw new StackOverflowException();
-            ref var registerToPush = ref GetRegister((byte)(instruction >> 8 & 0xFF));
+            ref var registerToPush = ref GetRegisterRef((byte)(instruction >> 8 & 0xFF));
             Mem.Stack[Mem.Sp] = registerToPush;
             Mem.Sp++;
         }
         private void InstructionPop(short instruction)
         {
             if (Mem.Sp == 0) throw new ArgumentOutOfRangeException("Nothing to pop from stack.");
-            ref var registerToPop = ref GetRegister((byte)(instruction >> 8 & 0xFF));
+            ref var registerToPop = ref GetRegisterRef((byte)(instruction >> 8 & 0xFF));
             Mem.Sp--;
             registerToPop = Mem.Stack[Mem.Sp];
         }
@@ -366,11 +408,11 @@ namespace RISC_Simulator
         /// Cx:3
         /// Dx:4
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="registerId"></param>
         /// <returns></returns>
-        private ref short GetRegister(int value)
+        private ref short GetRegisterRef(int registerId)
         {
-            switch (value)
+            switch (registerId)
             {
                 case 1:
                     return ref Mem.Ax;
@@ -382,6 +424,22 @@ namespace RISC_Simulator
                     return ref Mem.Dx;
                 default:
                     return ref Mem.NULL;
+            }
+        }
+        private short GetRegisterValue(int registerId)
+        {
+            switch (registerId)
+            {
+                case 1:
+                    return Mem.Ax;
+                case 2:
+                    return Mem.Bx;
+                case 3:
+                    return Mem.Cx;
+                case 4:
+                    return Mem.Dx;
+                default:
+                    return Mem.NULL;
             }
         }
 

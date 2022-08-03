@@ -1,0 +1,8 @@
+﻿.DATA
+allocate 5
+word 42 4
+word 0
+.CODE
+mov ax 0
+mov bx 123
+end

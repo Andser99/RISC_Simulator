@@ -1,0 +1,9 @@
+﻿.data
+allocate 5
+word 0 5
+.code
+mov ax 15
+mov bx 2
+
+label increase
+inc bx 

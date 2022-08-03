@@ -30,14 +30,16 @@ namespace RISC_Simulator_Unit_Tests
             codeGen.LoadFile(soureFile);
             string newFileName = Path.ChangeExtension(exampleFileName, ".risc");
             string outputFile = Path.Combine(TestContext.CurrentContext.TestDirectory, _codeFolder, newFileName);
-            proc.LoadCode(CodeReader.ReadToShortArray(outputFile));
+            string newFileDataName = Path.ChangeExtension(exampleFileName, ".riscd");
+            string outputDataFile = Path.Combine(TestContext.CurrentContext.TestDirectory, _codeFolder, newFileDataName);
+            proc.LoadProgram(CodeReader.ReadToShortArray(outputFile), CodeReader.ReadToShortArray(outputDataFile));
         }
 
         [Test]
         public void LoadCode_EmptyCode_Loaded()
         {
             short[] code = new short[] { };
-            proc.LoadCode(code);
+            proc.LoadProgram(code);
             Assert.AreEqual(proc.Mem.Code, code);
         }
 
@@ -45,7 +47,7 @@ namespace RISC_Simulator_Unit_Tests
         public void LoadCode_EmptyCode_InstructionPointerReset()
         {
             short[] code = new short[] { };
-            proc.LoadCode(code);
+            proc.LoadProgram(code);
             Assert.AreEqual(proc.Mem.Ip, 0);
         }
 
@@ -62,7 +64,39 @@ namespace RISC_Simulator_Unit_Tests
         {
             LoadCodeExample("AddBx10.txt");
             proc.ExecuteWholeProgram();
-            Assert.AreEqual(proc.Mem.Bx, 10);
+            Assert.AreEqual(10, proc.Mem.Bx);
+        }
+
+        [Test]
+        public void ExecuteCode_DataAndCodeSegmentsDefined_SplitAndRunOnlyCodePart()
+        {
+            LoadCodeExample("DataSegmentDefined.txt");
+            proc.ExecuteWholeProgram();
+            Assert.AreEqual(123, proc.Mem.Bx);
+            
+        }
+
+        [Test]
+        public  void ExecuteCode_LoadDataSegment_DataInitialized()
+        {
+            LoadCodeExample("DataSegmentDefined.txt");
+            Assert.AreEqual(42, proc.Mem.Data[0]);
+        }
+
+        [Test]
+        public void ExecuteCode_LoadIndirectByDpToAx_ValueIsStoredToAx()
+        {
+            LoadCodeExample("LoadIndirectDpToAx.txt");
+            proc.ExecuteWholeProgram();
+            Assert.AreEqual(22, proc.Mem.Ax);
+        }
+
+        [Test]
+        public void ExecuteCode_StoreValueFromAxToData_ValueIsStoredInDataSegment()
+        {
+            LoadCodeExample("StoreFromAxToData.txt");
+            proc.ExecuteWholeProgram();
+            Assert.AreEqual(123, proc.Mem.Data[1]);
         }
 
         [Test]

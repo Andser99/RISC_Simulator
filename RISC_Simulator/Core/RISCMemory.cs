@@ -36,9 +36,10 @@ namespace RISC_Simulator
         /// <summary>
         /// Flag Register
         /// <br>1 - Overflow</br>
-        /// <br>2 - Zero</br>
+        /// <br>2 - Zero / Operands Equal</br>
         /// <br>4 - Parity, SET even, CLEAR odd</br>
         /// <br>8 - Division by ZERO</br>
+        /// <br>16 - Destination register greater than source register</br>
         /// </summary>
         public byte Flags;
 
