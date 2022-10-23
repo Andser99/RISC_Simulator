@@ -7,7 +7,7 @@ A basic pixel editor with the program's supported console colors + a transparent
 ## Architecture
 Uses Intel syntax - \<op\> \<dst\> \<src\>
 Code, data and stack have their own memory blocks with configurable size.
-All addresation and value ranges works in 16-bit.
+All addresation and value ranges work in 16-bit.
 Four 16-bit registers.
 8-bit Flag register. 1 = Overflow, 2 = Zero, 4 = Parity SET even, CLEAR odd, 8 = division by ZERO
 Stack, Instruction and Data pointers - Sp, Ip, Dp.
@@ -33,7 +33,15 @@ ADD Bx 255 = 02 02 02 00 FF (02 means constant to registry, 02 ADD opcode, 02 is
 00 FF - 255, signals END of program, repeated multiple times
 ```
 
-More examples can be found in the ../RISC_Simulator/Examples folder
+More examples can be found in the ./RISC_Simulator/Examples folder
+
+## Data segment
+If a data segment is required, the source code starts with the .DATA keyword, then a .CODE keyword has to be specified before writing the code segment. When no .DATA segment is defined, the .CODE keyword can't be used.
+Indexing begins at 0, with 0 addressing the first 16 bits of data.
+Currently supported types are:
+- Word - 16-bit data store, can be used as an array and the value will be multiplied n-times where n is specified after its value. e.g. "word 0 5" will fill 5 successive 16-bit memory points with 0.
+- String - 16-bit characters, the specified string is converted to its corresponding 16-bit value and appended with a null character (using only ASCII characters is highly recommended, even though any UTF-16 characters should work). e.g. "string "hello" 6" defines a string with the characters h, e, l, l, o, \0. All strings are implicitly null terminated and this has to be accounted for when defining their length with the second parameter, otherwise data corruption can occur.
+
 
 # Application
 The console application uses a key based interaction, the following commands are implemented
@@ -46,7 +54,7 @@ The console application uses a key based interaction, the following commands are
 - r - runs the whole program until it ends
 - backspace - clears the console
 
-To run a test program, copy the full path to ../Examples/PseudoAnimation.txt (with frontslashes on windows '\\'), press 'g' and paste it, this will generate a compiled .risc file in the same directory, then press 'l' and paste the same path, replace .txt with .risc, now you can either step the program instruction by instruction with 's' or let it run with 'r'. Based on verbosity settings, there may be a lot of spam in the console which interferes with the programs console output, verbose mode can be toggled on and off by setting verbose:\<true/false\> in the source when creating a Processor instance.
+To run a test program, copy the full path to ./Examples/PseudoAnimation.txt (with frontslashes on windows '\\'), press 'g' and paste it, this will generate a compiled .risc file in the same directory, then press 'l' and paste the same path, replace .txt with .risc, now you can either step the program instruction by instruction with 's' or let it run with 'r'. Based on verbosity settings, there may be a lot of spam in the console which interferes with the programs console output, verbose mode can be toggled on and off by setting verbose:\<true/false\> in the source when creating a Processor instance.
 
 # Feature checklist
 
@@ -61,6 +69,6 @@ To run a test program, copy the full path to ../Examples/PseudoAnimation.txt (wi
 - [x] Compiler
 - [x] Stack functions, PUSH, POP
 - [ ] More run time settings (toggle verbose mode, modify registers/flags)
-- [ ] Storing/loading values on specific addresses
+- [x] Storing/loading values on specific addresses
 - [ ] CMP, MUL
 - [ ] Support for offset sprite creation

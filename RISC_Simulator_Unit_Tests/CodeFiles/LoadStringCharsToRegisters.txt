@@ -1,0 +1,11 @@
+﻿.data
+allocate 10
+word 22 4
+string "hello" 6
+.code
+load ax 4
+int 1
+load bx 5
+load cx 6
+load dx 7
+end

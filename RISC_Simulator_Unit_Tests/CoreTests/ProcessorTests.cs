@@ -92,6 +92,17 @@ namespace RISC_Simulator_Unit_Tests
         }
 
         [Test]
+        public void ExecuteCode_LoadStringCharsToRegisters_ValueIsStoredInAx()
+        {
+            LoadCodeExample("LoadStringCharsToRegisters.txt");
+            proc.ExecuteWholeProgram();
+            Assert.AreEqual((short)'h', proc.Mem.Ax);
+            Assert.AreEqual((short)'e', proc.Mem.Bx);
+            Assert.AreEqual((short)'l', proc.Mem.Cx);
+            Assert.AreEqual((short)'l', proc.Mem.Dx);
+        }
+
+        [Test]
         public void ExecuteCode_StoreValueFromAxToData_ValueIsStoredInDataSegment()
         {
             LoadCodeExample("StoreFromAxToData.txt");

@@ -78,6 +78,9 @@ namespace RISC_Simulator.Compiler
                 case "word":
                     AllocateWord(tokens);
                     break;
+                case "string":
+                    AllocateString(tokens);
+                    break;
                 default:
                     break;
             }
@@ -98,6 +101,32 @@ namespace RISC_Simulator.Compiler
                     _memory.Data[_dataPointer] = wordValue;
                     _dataPointer++;
                 }
+            }
+        }
+
+        public void AllocateString(string[] tokens)
+        {
+            short length = 1;
+            if (tokens.Length > 2)
+            {
+                short.TryParse(tokens[2], out length);
+            }
+            if (tokens[1].StartsWith('"') && tokens[1].EndsWith('"'))
+            {
+                var str = tokens[1].Trim('"');
+
+                for (int i = 0; i < length - 1; i++)
+                {
+                    short c = (short)str[i];
+                    _memory.Data[_dataPointer] = c;
+                    _dataPointer++;
+                }
+                _memory.Data[_dataPointer] = 0;
+                _dataPointer++;
+            }
+            else
+            {
+                throw new ArgumentException($"Expected a string in quotes after keyword 'string':\n {tokens}");
             }
         }
 
@@ -298,7 +327,7 @@ namespace RISC_Simulator.Compiler
                 Buffer.BlockCopy(_memory.Data, 0, buffer, 0, (_dataPointer) * 2);
                 fs.Write(buffer, 0, (int)((_dataPointer) * 2));
             }
-            Console.WriteLine($"Code successfully generated and saved to {newPath}");
+            Console.WriteLine($"Data successfully generated and saved to {newPath}");
         }
 
         private void GenerateCode()
